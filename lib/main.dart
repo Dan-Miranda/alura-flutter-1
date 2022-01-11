@@ -9,8 +9,12 @@ class BytebankApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: Scaffold(
-        body: ListaTransferencia(),
+      home: ListaTransferencia(),
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSwatch().copyWith(
+          secondary: Colors.blueAccent[700],
+          primary: Colors.green[900],
+        ),
       ),
     );
   }
@@ -24,8 +28,18 @@ class FormularioTransferencia extends StatelessWidget {
   final TextEditingController _valorTrasnferenciaContaController =
       TextEditingController();
 
+  _validarEntradas(BuildContext context) {
+    if (_numeroContaController.text.isNotEmpty &&
+        _valorTrasnferenciaContaController.text.isNotEmpty) {
+      _criarTransferencia(context);
+    } else {
+      print("Não pode ser vazio");
+    }
+  }
+
   _criarTransferencia(BuildContext context) {
-    final int numeroConta = int.parse(_numeroContaController.text);
+    final String numeroConta =
+        _numeroContaController.text.replaceAll(RegExp(r'[^0-9]'), '');
     final double valorTransferencia =
         double.parse(_valorTrasnferenciaContaController.text);
 
@@ -48,7 +62,10 @@ class FormularioTransferencia extends StatelessWidget {
               controller: _numeroContaController,
               label: 'Número da conta',
               placeholder: '0000',
-              formatadores: [LengthLimitingTextInputFormatter(4)],
+              formatadores: [
+                LengthLimitingTextInputFormatter(4),
+                FilteringTextInputFormatter.digitsOnly
+              ],
             ),
             InputTransferencia(
                 controller: _valorTrasnferenciaContaController,
@@ -58,13 +75,47 @@ class FormularioTransferencia extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16),
               child: ElevatedButton(
-                onPressed: () => _criarTransferencia(context),
+                onPressed: () => _validarEntradas(context),
                 child: const Text('Confirmar'),
               ),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+class AlertaDialog extends StatefulWidget {
+  AlertaDialog({Key? key}) : super(key: key);
+  late bool isDialogAlert = false;
+
+  @override
+  _AlertaDialogState createState() => _AlertaDialogState();
+}
+
+class _AlertaDialogState extends State<AlertaDialog> {
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('AlertDialog Title'),
+      content: SingleChildScrollView(
+        child: ListBody(
+          children: const <Widget>[
+            Text('This is a demo alert dialog.'),
+            Text('Would you like to approve of this message?'),
+          ],
+        ),
+      ),
+      actions: [
+        FlatButton(
+          textColor: const Color(0xFF6200EE),
+          onPressed: () {
+            widget.isDialogAlert = false;
+          },
+          child: const Text('OK'),
+        ),
+      ],
     );
   }
 }
@@ -106,15 +157,14 @@ class InputTransferencia extends StatelessWidget {
 }
 
 class InputPropriedades {
-  final Color cor;
   final String label;
   final String helperText;
   final Icon? icon;
   final TextInputType? tipoTexto;
   final List<TextInputFormatter>? formatadores;
 
-  InputPropriedades(this.cor, this.label, this.helperText, this.icon,
-      this.tipoTexto, this.formatadores);
+  InputPropriedades(this.label, this.helperText, this.icon, this.tipoTexto,
+      this.formatadores);
 }
 
 class InputTextfield extends StatelessWidget {
@@ -127,15 +177,7 @@ class InputTextfield extends StatelessWidget {
       keyboardType: _inputPropriedades.tipoTexto,
       inputFormatters: _inputPropriedades.formatadores,
       decoration: InputDecoration(
-          enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: _inputPropriedades.cor),
-          ),
-          focusedBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: _inputPropriedades.cor),
-          ),
-          fillColor: _inputPropriedades.cor,
           labelText: _inputPropriedades.label,
-          labelStyle: TextStyle(color: _inputPropriedades.cor),
           helperText: _inputPropriedades.helperText,
           prefix: _inputPropriedades.icon),
     );
@@ -144,7 +186,7 @@ class InputTextfield extends StatelessWidget {
 
 class ListaTransferencia extends StatefulWidget {
   ListaTransferencia({Key? key}) : super(key: key);
-  late List<Transferencia> _transferencias = [];
+  late final List<Transferencia> _transferencias = [];
 
   @override
   State<ListaTransferencia> createState() {
@@ -204,7 +246,7 @@ class ItemTransferencia extends StatelessWidget {
 }
 
 class Transferencia {
-  final int numeroConta;
+  final String numeroConta;
   final double valor;
 
   Transferencia(this.numeroConta, this.valor);
